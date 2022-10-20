@@ -1,4 +1,4 @@
-package productMangement;
+package product;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -38,19 +38,22 @@ public class SocketClient {
 			try {
 				while(true) {
 					String receiveJson = dis.readUTF();
+					System.out.println(receiveJson);
 					
 					JSONObject jsonObject = new JSONObject(receiveJson);
 					int menu = jsonObject.getInt("menu");
 					
 					switch(menu) {
-//						case 0:
-//							JSON
+						case 0:
+							jsonObject.put("datasize", 0);
+							String send = jsonObject.toString();
+							send(send);
+							break;
 						case 1:
 							//create
-							//데이터전송 받음
-							//데이터를 받아서 서버에 저장했음
 							int a = create(jsonObject);
 							//이제 양식에따라 데이터를 보내면 됨
+							///////////여기고쳐라 데이터 생성할때는 json이라서 자료형이 다 다를 수 있는데 주고받을때는 string으로 받으니까 문자열로 다 고쳐 
 							sendData(a);
 							break;
 							
@@ -74,6 +77,7 @@ public class SocketClient {
 			} catch(IOException e) {
 			}
 		});
+		thread.start();
 	}
 	
 	//데이터 저장하는 함수
@@ -81,14 +85,14 @@ public class SocketClient {
 		//JSON파일에서 no가 0일 경우 맨 뒤에 넣는다.
 		//JSON파일에서 1이오면 0번에 저장, 2가 오면 1번에 저장
 		//2개있는데 데이터가 하나 들어오면 2번에저장되어야하는데 함수가 index-1이니까 1더하셈
-		//list에 추가할때만 -1하고 
+		//list에 추가할때만 -1하고
 		int no = list.size();
 		String name = data.getString("name");
 		int price = data.getInt("price");
 		int stock = data.getInt("stock");
 		
-		Product product = new Product(no,name,price,stock);
-		list.add(no-1,product);
+		Product product = new Product(no+1,name,price,stock);
+		list.add(no,product);
 		
 		int status = 1;
 		return status;
@@ -108,17 +112,22 @@ public class SocketClient {
 	}
 	
 	public int remove(JSONObject data) {
+		int status;
+		
 		int no = data.getInt("no");
 		
-		list.remove(no-1);
-		//remove하면 숫자도 바꿔줘야됨
-		for(Product product : list) {
-			//리스트에서 해당 product의 위치를 찾고 그것을 product의 no로 바꿔준다
-			product.setNo(list.indexOf(product)+1);
+		if(list.size()!=0) {
+			list.remove(no-1);
+			//remove하면 숫자도 바꿔줘야됨
+			for(Product product : list) {
+				//리스트에서 해당 product의 위치를 찾고 그것을 product의 no로 바꿔준다
+				product.setNo(list.indexOf(product)+1);
+			}
+			status = 1;
+			return status;
+		} else {
+			return status = 0;
 		}
-		
-		int status = 1;
-		return status;
 	}
 	
 	public void sendData(int status) throws IOException{
@@ -129,11 +138,16 @@ public class SocketClient {
 			root.put("result", "fail");
 		}
 		
-		JSONArray list = new JSONArray();
-		for(Product product : this.list) {
-			list.put(product);
+		JSONArray data = new JSONArray();
+		if(!list.isEmpty()) {
+			for(Product product : this.list) {
+				data.put(product);
+			}
+			root.put("datasize", list.size());
+			root.put("data", data);
+		} else {
+			root.put("datasize", 0);
 		}
-		root.put("data", list);
 		
 		String json = root.toString();
 		send(json);

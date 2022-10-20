@@ -1,4 +1,4 @@
-package productMangement;
+package product;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

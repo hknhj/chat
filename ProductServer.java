@@ -1,4 +1,4 @@
-package productMangement;
+package product;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
